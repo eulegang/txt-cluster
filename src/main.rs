@@ -31,12 +31,35 @@ fn main() {
                         .long("winkler"),
                 ),
         ))
+        .subcommand(cluster_standard_args(
+            SubCommand::with_name("levenshtein")
+                .arg(
+                    Arg::with_name("threshold")
+                        .help("maximum edit difference")
+                        .short("t")
+                        .long("threshold")
+                        .required(true)
+                        .takes_value(true)
+                        .validator(nonnegative),
+                )
+                .arg(
+                    Arg::with_name("damerau")
+                        .help("use damerau levenshtein")
+                        .short("d")
+                        .long("damerau"),
+                ),
+        ))
         .get_matches();
 
     match matches.subcommand() {
         ("jaro", Some(matches)) => {
             cluster::Jaro::run(&matches);
         }
+
+        ("levenshtein", Some(matches)) => {
+            cluster::Levenshtein::run(&matches);
+        }
+
         _ => println!("{}", matches.usage()),
     }
 }

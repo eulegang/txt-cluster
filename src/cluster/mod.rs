@@ -7,8 +7,10 @@ use std::io::{stdout, Write};
 use std::process::exit;
 
 mod jaro;
+mod levenshtein;
 
 pub use jaro::Jaro;
+pub use levenshtein::Levenshtein;
 
 pub struct Cluster<'a> {
     clusters: Vec<Vec<&'a String>>,
