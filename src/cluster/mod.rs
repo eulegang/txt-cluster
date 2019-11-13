@@ -2,6 +2,7 @@ use crate::utils::lines;
 use crate::utils::Combinations;
 use clap::ArgMatches;
 use rayon::prelude::*;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{stdout, Write};
 use std::process::exit;
@@ -13,39 +14,35 @@ pub use jaro::Jaro;
 pub use levenshtein::Levenshtein;
 
 pub struct Cluster<'a> {
-    clusters: Vec<Vec<&'a String>>,
+    clusters: Vec<HashSet<&'a String>>,
 }
 
 impl<'a> Cluster<'a> {
-    pub fn pairwise(pairs: Vec<(&'a String, &'a String)>, total: &'a Vec<String>) -> Cluster<'a> {
-        let mut clusters: Vec<Vec<&'a String>> = Vec::new();
+    pub fn pairwise(pairs: Vec<(&'a String, &'a String)>) -> Cluster<'a> {
+        let mut clusters: Vec<HashSet<&'a String>> = Vec::new();
         'pairwise: for (first, second) in pairs {
             for cluster in &mut clusters {
-                if cluster.contains(&first) {
-                    cluster.push(second);
-                    continue 'pairwise;
-                } else if cluster.contains(&second) {
-                    cluster.push(first);
-                    continue 'pairwise;
+                match (cluster.contains(&first), cluster.contains(&second)) {
+                    (true, false) => {
+                        cluster.insert(second);
+                        continue 'pairwise;
+                    }
+                    (false, true) => {
+                        cluster.insert(first);
+                        continue 'pairwise;
+                    }
+                    (true, true) => {
+                        continue 'pairwise;
+                    }
+                    (false, false) => (),
                 }
             }
 
-            clusters.push(vec![first, second]);
+            let mut new_set = HashSet::new();
+            new_set.insert(first);
+            new_set.insert(second);
+            clusters.push(new_set);
         }
-
-        let mut singletons: Vec<Vec<&'a String>> = Vec::new();
-
-        'singleton: for element in total {
-            for cluster in &clusters {
-                if cluster.contains(&element) {
-                    continue 'singleton;
-                }
-            }
-
-            singletons.push(vec![element]);
-        }
-
-        clusters.extend(singletons);
 
         Cluster { clusters }
     }
@@ -65,7 +62,7 @@ pub trait ClusterAlgo: Sized + Sync {
             .filter(|(a, b)| self.accept(a, b))
             .collect::<Vec<(&String, &String)>>();
 
-        Cluster::pairwise(pairs, lines)
+        Cluster::pairwise(pairs)
     }
 }
 
