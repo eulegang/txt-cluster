@@ -90,10 +90,16 @@ where
 }
 
 pub fn print_cluster<W: Write>(mut out: W, results: &Cluster) {
+    let mut first = false;
     for cluster in &results.clusters {
+        if !first {
+            let _ = writeln!(&mut out, "");
+        } else {
+            first = true;
+        }
+
         for line in cluster {
             let _ = writeln!(&mut out, "{}", line);
         }
-        let _ = writeln!(&mut out, "");
     }
 }
