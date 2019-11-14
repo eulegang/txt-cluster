@@ -49,6 +49,24 @@ fn main() {
                         .long("damerau"),
                 ),
         ))
+        .subcommand(cluster_standard_args(
+            SubCommand::with_name("normalized-levenshtein")
+                .arg(
+                    Arg::with_name("ratio")
+                        .help("maximum edit difference normalized")
+                        .short("r")
+                        .long("ratio")
+                        .required(true)
+                        .takes_value(true)
+                        .validator(ratio),
+                )
+                .arg(
+                    Arg::with_name("damerau")
+                        .help("use damerau levenshtein")
+                        .short("d")
+                        .long("damerau"),
+                ),
+        ))
         .get_matches();
 
     match matches.subcommand() {
@@ -58,6 +76,10 @@ fn main() {
 
         ("levenshtein", Some(matches)) => {
             cluster::Levenshtein::run(&matches);
+        }
+
+        ("normalized-levenshtein", Some(matches)) => {
+            cluster::NormLevenshtein::run(&matches);
         }
 
         _ => println!("{}", matches.usage()),
