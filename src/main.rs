@@ -11,74 +11,64 @@ use cluster::ClusterAlgo;
 use validation::*;
 
 fn main() {
+    let ratio_arg = Arg::with_name("ratio")
+        .help("minimum ration to cluster")
+        .short("r")
+        .long("ratio")
+        .required(true)
+        .takes_value(true)
+        .validator(ratio);
+
+    let winkler_arg = Arg::with_name("winkler")
+        .help("use jaro winkler: optimize prefix similarity")
+        .short("w")
+        .long("winkler");
+
+    let file_arg = Arg::with_name("file")
+        .help("read this file for lines")
+        .short("f")
+        .long("files")
+        .takes_value(true);
+
+    let threshold_arg = Arg::with_name("threshold")
+        .help("maximum edit difference")
+        .short("t")
+        .long("threshold")
+        .required(true)
+        .takes_value(true)
+        .validator(nonnegative);
+
+    let damerau_arg = Arg::with_name("damerau")
+        .help("use damerau levenshtein")
+        .short("d")
+        .long("damerau");
+
     let matches = App::new(crate_name!())
         .version(crate_version!())
         .help("clusters incoming lines")
-        .subcommand(cluster_standard_args(
+        .subcommand(
             SubCommand::with_name("jaro")
-                .arg(
-                    Arg::with_name("ratio")
-                        .help("minimum ration to cluster")
-                        .short("r")
-                        .long("ratio")
-                        .required(true)
-                        .takes_value(true)
-                        .validator(ratio),
-                )
-                .arg(
-                    Arg::with_name("winkler")
-                        .help("use jaro winkler: optimize prefix similarity")
-                        .short("w")
-                        .long("winkler"),
-                ),
-        ))
-        .subcommand(cluster_standard_args(
+                .arg(&ratio_arg)
+                .arg(&winkler_arg)
+                .arg(&file_arg),
+        )
+        .subcommand(
             SubCommand::with_name("levenshtein")
-                .arg(
-                    Arg::with_name("threshold")
-                        .help("maximum edit difference")
-                        .short("t")
-                        .long("threshold")
-                        .required(true)
-                        .takes_value(true)
-                        .validator(nonnegative),
-                )
-                .arg(
-                    Arg::with_name("damerau")
-                        .help("use damerau levenshtein")
-                        .short("d")
-                        .long("damerau"),
-                ),
-        ))
-        .subcommand(cluster_standard_args(
+                .arg(&threshold_arg)
+                .arg(&damerau_arg)
+                .arg(&file_arg),
+        )
+        .subcommand(
             SubCommand::with_name("normalized-levenshtein")
-                .arg(
-                    Arg::with_name("ratio")
-                        .help("maximum edit difference normalized")
-                        .short("r")
-                        .long("ratio")
-                        .required(true)
-                        .takes_value(true)
-                        .validator(ratio),
-                )
-                .arg(
-                    Arg::with_name("damerau")
-                        .help("use damerau levenshtein")
-                        .short("d")
-                        .long("damerau"),
-                ),
-        ))
-        .subcommand(cluster_standard_args(
-            SubCommand::with_name("osa").arg(
-                Arg::with_name("threshold")
-                    .help("maximum edit difference")
-                    .short("t")
-                    .long("threshold")
-                    .required(true)
-                    .takes_value(true)
-                    .validator(nonnegative),
-            ),
-        ))
+                .arg(&ratio_arg)
+                .arg(&damerau_arg)
+                .arg(&file_arg),
+        )
+        .subcommand(
+            SubCommand::with_name("osa")
+                .arg(&threshold_arg)
+                .arg(&file_arg),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -100,14 +90,4 @@ fn main() {
 
         _ => println!("{}", matches.usage()),
     }
-}
-
-fn cluster_standard_args<'a, 'b>(cmd: App<'a, 'b>) -> App<'a, 'b> {
-    cmd.arg(
-        Arg::with_name("file")
-            .help("read this file for lines")
-            .short("f")
-            .long("files")
-            .takes_value(true),
-    )
 }
