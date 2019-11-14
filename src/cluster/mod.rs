@@ -1,5 +1,5 @@
+use crate::combinations::*;
 use crate::utils::lines;
-use crate::utils::Combinations;
 use clap::ArgMatches;
 use rayon::prelude::*;
 use std::collections::HashSet;
@@ -78,7 +78,7 @@ pub trait ClusterAlgo: Sized + Sync {
     }
 
     fn cluster<'a>(&self, lines: &'a Vec<String>) -> Cluster<'a> {
-        let pairs = Combinations::new(lines)
+        let pairs = combinations(lines)
             .par_bridge()
             .filter(|(a, b)| self.accept(a, b))
             .collect::<Vec<(&String, &String)>>();

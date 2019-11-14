@@ -2,6 +2,7 @@
 extern crate clap;
 
 mod cluster;
+mod combinations;
 mod utils;
 mod validation;
 
