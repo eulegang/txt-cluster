@@ -22,30 +22,47 @@ impl<'a> Cluster<'a> {
         let mut clusters: Vec<HashSet<&'a String>> = Vec::new();
         'pairwise: for (first, second) in pairs {
             for cluster in &mut clusters {
-                match (cluster.contains(&first), cluster.contains(&second)) {
-                    (true, false) => {
-                        cluster.insert(second);
-                        continue 'pairwise;
-                    }
-                    (false, true) => {
-                        cluster.insert(first);
-                        continue 'pairwise;
-                    }
-                    (true, true) => {
-                        continue 'pairwise;
-                    }
-                    (false, false) => (),
+                if cluster.contains(&first) || cluster.contains(&second) {
+                    cluster.insert(&first);
+                    cluster.insert(&second);
+                    continue 'pairwise;
                 }
             }
 
             let mut new_set = HashSet::new();
             new_set.insert(first);
             new_set.insert(second);
+
             clusters.push(new_set);
         }
 
+        clusters = merge_clusters(clusters);
+
         Cluster { clusters }
     }
+}
+
+fn merge_clusters<'a>(clusters: Vec<HashSet<&'a String>>) -> Vec<HashSet<&'a String>> {
+    let mut result = Vec::new();
+
+    for mut cluster in clusters {
+        let mut c_index = Vec::new();
+        for (i, c) in result.iter().enumerate() {
+            if !cluster.is_disjoint(c) {
+                c_index.push(i)
+            }
+        }
+
+        for i in c_index.iter().rev() {
+            for elem in result.remove(*i) {
+                cluster.insert(elem);
+            }
+        }
+
+        result.push(cluster);
+    }
+
+    result
 }
 
 pub trait ClusterAlgo: Sized + Sync {
