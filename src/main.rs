@@ -67,6 +67,17 @@ fn main() {
                         .long("damerau"),
                 ),
         ))
+        .subcommand(cluster_standard_args(
+            SubCommand::with_name("osa").arg(
+                Arg::with_name("threshold")
+                    .help("maximum edit difference")
+                    .short("t")
+                    .long("threshold")
+                    .required(true)
+                    .takes_value(true)
+                    .validator(nonnegative),
+            ),
+        ))
         .get_matches();
 
     match matches.subcommand() {
@@ -80,6 +91,10 @@ fn main() {
 
         ("normalized-levenshtein", Some(matches)) => {
             cluster::NormLevenshtein::run(&matches);
+        }
+
+        ("osa", Some(matches)) => {
+            cluster::OSA::run(&matches);
         }
 
         _ => println!("{}", matches.usage()),

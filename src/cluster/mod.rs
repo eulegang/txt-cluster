@@ -10,10 +10,12 @@ use std::process::exit;
 mod jaro;
 mod levenshtein;
 mod norm_levenshtein;
+mod osa;
 
 pub use jaro::Jaro;
 pub use levenshtein::Levenshtein;
 pub use norm_levenshtein::NormLevenshtein;
+pub use osa::OSA;
 
 pub struct Cluster<'a> {
     clusters: Vec<HashSet<&'a String>>,
