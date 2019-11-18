@@ -3,6 +3,7 @@ extern crate clap;
 
 mod cluster;
 mod combinations;
+mod doc_reader;
 mod utils;
 mod validation;
 
@@ -30,6 +31,13 @@ fn main() {
         .long("files")
         .takes_value(true);
 
+    let mode_arg = Arg::with_name("input_mode")
+        .help("input reading mode")
+        .short("m")
+        .long("mode")
+        .possible_values(&["line", "l", "paragraph", "p", "null", "n", "0"])
+        .takes_value(true);
+
     let threshold_arg = Arg::with_name("threshold")
         .help("maximum edit difference")
         .short("t")
@@ -50,24 +58,28 @@ fn main() {
             SubCommand::with_name("jaro")
                 .arg(&ratio_arg)
                 .arg(&winkler_arg)
-                .arg(&file_arg),
+                .arg(&file_arg)
+                .arg(&mode_arg),
         )
         .subcommand(
             SubCommand::with_name("levenshtein")
                 .arg(&threshold_arg)
                 .arg(&damerau_arg)
-                .arg(&file_arg),
+                .arg(&file_arg)
+                .arg(&mode_arg),
         )
         .subcommand(
             SubCommand::with_name("normalized-levenshtein")
                 .arg(&ratio_arg)
                 .arg(&damerau_arg)
-                .arg(&file_arg),
+                .arg(&file_arg)
+                .arg(&mode_arg),
         )
         .subcommand(
             SubCommand::with_name("osa")
                 .arg(&threshold_arg)
-                .arg(&file_arg),
+                .arg(&file_arg)
+                .arg(&mode_arg),
         )
         .get_matches();
 

@@ -1,5 +1,5 @@
 use crate::combinations::*;
-use crate::utils::lines;
+use crate::utils::docs;
 use clap::ArgMatches;
 use rayon::prelude::*;
 use std::collections::HashSet;
@@ -91,7 +91,7 @@ pub fn run_cluster<CA>(matches: &ArgMatches, algo: CA)
 where
     CA: ClusterAlgo,
 {
-    let lines = lines(matches.value_of("file"));
+    let lines = docs(matches);
     let clusters = algo.cluster(&lines);
 
     match matches.value_of("output") {
