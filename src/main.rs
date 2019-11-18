@@ -56,6 +56,7 @@ fn main() {
         .help("clusters incoming lines")
         .subcommand(
             SubCommand::with_name("jaro")
+                .alias("j")
                 .arg(&ratio_arg)
                 .arg(&winkler_arg)
                 .arg(&file_arg)
@@ -63,6 +64,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("levenshtein")
+                .alias("l")
                 .arg(&threshold_arg)
                 .arg(&damerau_arg)
                 .arg(&file_arg)
@@ -70,6 +72,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("normalized-levenshtein")
+                .alias("n")
                 .arg(&ratio_arg)
                 .arg(&damerau_arg)
                 .arg(&file_arg)
@@ -77,6 +80,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("osa")
+                .alias("o")
                 .arg(&threshold_arg)
                 .arg(&file_arg)
                 .arg(&mode_arg),
