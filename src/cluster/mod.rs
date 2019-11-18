@@ -1,11 +1,8 @@
 use crate::combinations::*;
-use crate::utils::docs;
+use crate::utils::run_cluster;
 use clap::ArgMatches;
 use rayon::prelude::*;
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::{stdout, Write};
-use std::process::exit;
 
 mod jaro;
 mod levenshtein;
@@ -40,33 +37,42 @@ impl<'a> Cluster<'a> {
             clusters.push(new_set);
         }
 
-        clusters = merge_clusters(clusters);
+        clusters = Cluster::merge(clusters);
 
         Cluster { clusters }
     }
+
+    fn merge(clusters: Vec<HashSet<&'a String>>) -> Vec<HashSet<&'a String>> {
+        let mut result = Vec::new();
+
+        for mut cluster in clusters {
+            let mut c_index = Vec::new();
+            for (i, c) in result.iter().enumerate() {
+                if !cluster.is_disjoint(c) {
+                    c_index.push(i)
+                }
+            }
+
+            for i in c_index.iter().rev() {
+                for elem in result.remove(*i) {
+                    cluster.insert(elem);
+                }
+            }
+
+            result.push(cluster);
+        }
+
+        result
+    }
 }
 
-fn merge_clusters<'a>(clusters: Vec<HashSet<&'a String>>) -> Vec<HashSet<&'a String>> {
-    let mut result = Vec::new();
+impl<'a> IntoIterator for Cluster<'a> {
+    type Item = HashSet<&'a String>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
 
-    for mut cluster in clusters {
-        let mut c_index = Vec::new();
-        for (i, c) in result.iter().enumerate() {
-            if !cluster.is_disjoint(c) {
-                c_index.push(i)
-            }
-        }
-
-        for i in c_index.iter().rev() {
-            for elem in result.remove(*i) {
-                cluster.insert(elem);
-            }
-        }
-
-        result.push(cluster);
+    fn into_iter(self) -> Self::IntoIter {
+        self.clusters.into_iter()
     }
-
-    result
 }
 
 pub trait ClusterAlgo: Sized + Sync {
@@ -84,43 +90,5 @@ pub trait ClusterAlgo: Sized + Sync {
             .collect::<Vec<(&String, &String)>>();
 
         Cluster::pairwise(pairs)
-    }
-}
-
-pub fn run_cluster<CA>(matches: &ArgMatches, algo: CA)
-where
-    CA: ClusterAlgo,
-{
-    let lines = docs(matches);
-    let clusters = algo.cluster(&lines);
-
-    match matches.value_of("output") {
-        None => print_cluster(stdout(), &clusters),
-        Some(output) => {
-            let file = match File::create(output) {
-                Ok(f) => f,
-                Err(err) => {
-                    eprintln!("Failed to open '{}': {}", output, err);
-                    exit(1)
-                }
-            };
-
-            print_cluster(file, &clusters);
-        }
-    }
-}
-
-pub fn print_cluster<W: Write>(mut out: W, results: &Cluster) {
-    let mut first = false;
-    for cluster in &results.clusters {
-        if !first {
-            let _ = writeln!(&mut out, "");
-        } else {
-            first = true;
-        }
-
-        for line in cluster {
-            let _ = writeln!(&mut out, "{}", line);
-        }
     }
 }
