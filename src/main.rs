@@ -2,6 +2,7 @@
 extern crate clap;
 
 mod cluster;
+mod cluster_output;
 mod combinations;
 mod doc_reader;
 mod utils;
@@ -31,11 +32,24 @@ fn main() {
         .long("files")
         .takes_value(true);
 
-    let mode_arg = Arg::with_name("input_mode")
-        .help("input reading mode")
-        .short("m")
-        .long("mode")
+    let irs_arg = Arg::with_name("irs")
+        .help("input record seperator")
+        .short("R")
+        .long("irs")
         .possible_values(&["line", "l", "paragraph", "p", "null", "n", "0"])
+        .takes_value(true);
+
+    let ors_arg = Arg::with_name("ors")
+        .help("output record seperator")
+        .short("r")
+        .long("ors")
+        .possible_values(&["0", "line", "l", "double", "d"])
+        .takes_value(true);
+
+    let ofs_arg = Arg::with_name("ofs")
+        .help("output field seperator")
+        .long("ofs")
+        .possible_values(&["0", ":", "line", "l"])
         .takes_value(true);
 
     let threshold_arg = Arg::with_name("threshold")
@@ -60,7 +74,9 @@ fn main() {
                 .arg(&ratio_arg)
                 .arg(&winkler_arg)
                 .arg(&file_arg)
-                .arg(&mode_arg),
+                .arg(&ors_arg)
+                .arg(&ofs_arg)
+                .arg(&irs_arg),
         )
         .subcommand(
             SubCommand::with_name("levenshtein")
@@ -68,7 +84,9 @@ fn main() {
                 .arg(&threshold_arg)
                 .arg(&damerau_arg)
                 .arg(&file_arg)
-                .arg(&mode_arg),
+                .arg(&ors_arg)
+                .arg(&ofs_arg)
+                .arg(&irs_arg),
         )
         .subcommand(
             SubCommand::with_name("normalized-levenshtein")
@@ -76,14 +94,18 @@ fn main() {
                 .arg(&ratio_arg)
                 .arg(&damerau_arg)
                 .arg(&file_arg)
-                .arg(&mode_arg),
+                .arg(&ors_arg)
+                .arg(&ofs_arg)
+                .arg(&irs_arg),
         )
         .subcommand(
             SubCommand::with_name("osa")
                 .alias("o")
                 .arg(&threshold_arg)
                 .arg(&file_arg)
-                .arg(&mode_arg),
+                .arg(&ors_arg)
+                .arg(&ofs_arg)
+                .arg(&irs_arg),
         )
         .get_matches();
 

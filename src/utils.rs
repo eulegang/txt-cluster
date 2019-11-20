@@ -1,18 +1,19 @@
 use crate::cluster::{Cluster, ClusterAlgo};
-use crate::doc_reader::{DocReader, RecordSeperator};
+use crate::cluster_output::{ClusterOutput, FieldSeperator as OFS, RecordSeperator as ORS};
+use crate::doc_reader::{DocReader, RecordSeperator as IRS};
 use clap::ArgMatches;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io;
 use std::process::exit;
 
 pub fn docs(matches: &ArgMatches) -> Vec<String> {
     match matches.value_of("file") {
         None => {
             let sin = io::stdin();
-            DocReader::new(sin.lock(), mode(&matches)).collect()
+            DocReader::new(sin.lock(), irs(&matches)).collect()
         }
         Some(path) => match std::fs::File::open(path) {
-            Ok(file) => DocReader::with_read(file, mode(&matches)).collect(),
+            Ok(file) => DocReader::with_read(file, irs(&matches)).collect(),
             Err(err) => {
                 eprintln!("Error opening '{}': {}", path, err);
                 std::process::exit(1);
@@ -21,11 +22,29 @@ pub fn docs(matches: &ArgMatches) -> Vec<String> {
     }
 }
 
-fn mode(matches: &ArgMatches) -> RecordSeperator {
-    match matches.value_of("input_mode") {
-        Some("paragraph") | Some("p") => RecordSeperator::Paragraph,
-        Some("line") | Some("l") | None => RecordSeperator::Line,
-        Some("null") | Some("n") | Some("0") => RecordSeperator::Null,
+fn irs(matches: &ArgMatches) -> IRS {
+    match matches.value_of("irs") {
+        Some("paragraph") | Some("p") => IRS::Paragraph,
+        Some("line") | Some("l") | None => IRS::Line,
+        Some("null") | Some("n") | Some("0") => IRS::Null,
+        _ => unreachable!(),
+    }
+}
+
+fn ofs(matches: &ArgMatches) -> OFS {
+    match matches.value_of("ofs") {
+        Some("0") => OFS::Null,
+        Some(":") => OFS::Colon,
+        Some("line") | Some("l") | None => OFS::Line,
+        _ => unreachable!(),
+    }
+}
+
+fn ors(matches: &ArgMatches) -> ORS {
+    match matches.value_of("ors") {
+        Some("0") => ORS::Null,
+        Some("line") | Some("l") => ORS::Line,
+        Some("double") | Some("d") | None => ORS::DLine,
         _ => unreachable!(),
     }
 }
@@ -36,34 +55,25 @@ where
 {
     let lines = docs(matches);
     let clusters = algo.cluster(&lines);
+    print_cluster(matches, clusters);
+}
 
+fn print_cluster(matches: &ArgMatches, cluster: Cluster<'_>) {
     match matches.value_of("output") {
-        None => print_cluster(io::stdout(), clusters),
-        Some(output) => {
-            let file = match File::create(output) {
+        None => {
+            ClusterOutput::new(io::stdout(), ofs(matches), ors(matches)).output(cluster);
+        }
+
+        Some(path) => {
+            let file = match File::create(path) {
                 Ok(f) => f,
                 Err(err) => {
-                    eprintln!("Failed to open '{}': {}", output, err);
+                    eprintln!("Failed to open '{}': {}", path, err);
                     exit(1)
                 }
             };
 
-            print_cluster(file, clusters);
-        }
-    }
-}
-
-pub fn print_cluster<W: Write>(mut out: W, results: Cluster) {
-    let mut first = false;
-    for cluster in results.into_iter() {
-        if !first {
-            let _ = writeln!(&mut out, "");
-        } else {
-            first = true;
-        }
-
-        for line in cluster {
-            let _ = writeln!(&mut out, "{}", line);
+            ClusterOutput::new(file, ofs(matches), ors(matches)).output(cluster);
         }
     }
 }
