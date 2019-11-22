@@ -61,11 +61,12 @@ where
 fn print_cluster(matches: &ArgMatches, cluster: Cluster<'_>) {
     match matches.value_of("output") {
         None => {
-            ClusterOutput::new(io::stdout(), ofs(matches), ors(matches)).output(cluster);
+            let mut out = io::stdout();
+            ClusterOutput::new(&mut out, ofs(matches), ors(matches)).output(cluster);
         }
 
         Some(path) => {
-            let file = match File::create(path) {
+            let mut file = match File::create(path) {
                 Ok(f) => f,
                 Err(err) => {
                     eprintln!("Failed to open '{}': {}", path, err);
@@ -73,7 +74,7 @@ fn print_cluster(matches: &ArgMatches, cluster: Cluster<'_>) {
                 }
             };
 
-            ClusterOutput::new(file, ofs(matches), ors(matches)).output(cluster);
+            ClusterOutput::new(&mut file, ofs(matches), ors(matches)).output(cluster);
         }
     }
 }
